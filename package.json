@@ -1,0 +1,17 @@
+{
+  "name": "naturalmultitrackplayer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 5555",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "howler": "^2.2.0",
+    "next": "9.5.3",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "sass": "^1.26.10"
+  }
+}
