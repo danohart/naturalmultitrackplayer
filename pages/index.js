@@ -1,20 +1,44 @@
 import Head from "next/head";
 import { Howl, Howler } from "howler";
+import Player from "../components/Player";
 import styles from "../styles/Home.module.scss";
 
 export default function Home() {
-  const sound1 = new Howl({
-    src: ["Grey Slush_Stay With Me.mp3"],
-  });
-  const sound2 = new Howl({
-    src: ["My-Chains-Are-Gone.mp3"],
-  });
+  const tisSoSweet = [
+    new Howl({
+      src: ["/tissosweet/Acoustic_1.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Bass_1.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Carter_1.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Drums.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Electric_1.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Mando_1.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Piano_1.wav"],
+      preload: true,
+    }),
+    new Howl({
+      src: ["/tissosweet/Stacks.wav"],
+      preload: true,
+    }),
+  ];
 
-  function allSounds(action) {
-    if (action === "play") sound1.play();
-    if (action === "pause") sound1.pause();
-    if (action === "stop") sound1.stop();
-  }
   return (
     <div className={styles.container}>
       <Head>
@@ -24,15 +48,7 @@ export default function Home() {
 
       <main className={styles.main}>
         <h1 className={styles.title}>Multitrack Player</h1>
-        <div className='player' onClick={() => allSounds("play")}>
-          Play Sound
-        </div>
-        <div className='player' onClick={() => allSounds("pause")}>
-          Pause Sound
-        </div>
-        <div className='player' onClick={() => allSounds("stop")}>
-          Stop Sound
-        </div>
+        <Player song={tisSoSweet} />
       </main>
 
       <footer className={styles.footer}>
