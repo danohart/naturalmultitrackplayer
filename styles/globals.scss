@@ -27,12 +27,18 @@ a {
     cursor: pointer;
   }
 
+  &-play {
+    &.disabled {
+      color: #e2e2e2;
+    }
+  }
+
   &-tracks {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
-    margin: 0 auto;
+    margin: 10px auto;
   }
 
   &-track {
@@ -44,6 +50,13 @@ a {
       padding: 10px 10px;
       background-color: #121212;
       color: white;
+    }
+
+    &-volume {
+      display: flex;
+      font-size: 0.8rem;
+      justify-content: space-evenly;
+      margin: 5px 0;
     }
 
     .mute {
