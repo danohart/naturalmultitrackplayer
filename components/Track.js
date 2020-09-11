@@ -41,7 +41,7 @@ export default function Mute(props) {
         className={isUnmuted ? "mute" : "mute muted"}
         onClick={() => muteTrack(props.track.song)}
       >
-        Mute
+        {isUnmuted ? "On" : "Off"}
       </div>
     </div>
   );

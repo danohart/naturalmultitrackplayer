@@ -16,42 +16,55 @@ export default function Player(props) {
   }, []);
 
   function allSounds(action) {
-    if (action === "play")
+    if (action === "play") {
       if (props.song[props.song.length - 1].state() === "loading") return null;
+    }
     setIsPaused(false), props.song.map((track) => track.play());
     if (action === "pause")
       setIsPaused(true), props.song.map((track) => track.pause());
     if (action === "stop")
       setIsPaused(true), props.song.map((track) => track.stop());
+
+    return action;
   }
 
   return (
     <div className='player'>
-      {isPaused ? (
-        <div
-          className={`player-play button ${isLoaded ? "" : "disabled"}`}
-          onClick={() => allSounds("play")}
-        >
-          {isLoaded ? (
-            <span>
-              <FontAwesomeIcon icon={faPlay} /> Play
-            </span>
+      {isLoaded ? (
+        <div className='controls'>
+          {isPaused ? (
+            <div
+              className={`player-play button ${isLoaded ? "" : "disabled"}`}
+              onClick={() => allSounds("play")}
+            >
+              {isLoaded ? (
+                <span>
+                  <FontAwesomeIcon icon={faPlay} />
+                </span>
+              ) : (
+                <span>Loading Track</span>
+              )}
+            </div>
           ) : (
-            <span>Loading Track</span>
+            <div
+              className='player-pause button'
+              onClick={() => allSounds("pause")}
+            >
+              <FontAwesomeIcon icon={faPause} />
+            </div>
           )}
+          <div className='player-stop button' onClick={() => allSounds("stop")}>
+            <FontAwesomeIcon icon={faStop} />
+          </div>
         </div>
       ) : (
-        <div className='player-pause button' onClick={() => allSounds("pause")}>
-          <FontAwesomeIcon icon={faPause} /> Pause
-        </div>
+        <div className='player-loading'>Loading Tracks</div>
       )}
+
       <div className='player-tracks'>
         {props.song.map((track, index) => (
           <Track key={index} track={{ song: track, key: index }} />
         ))}
-      </div>
-      <div className='player-stop button' onClick={() => allSounds("stop")}>
-        <FontAwesomeIcon icon={faStop} /> Stop
       </div>
     </div>
   );

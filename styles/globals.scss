@@ -19,17 +19,29 @@ a {
   width: 100%;
   margin: 0 auto;
 
-  .button {
-    font-size: 2rem;
+  &-loading {
+    font-size: 3rem;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 10px;
-    cursor: pointer;
+    color: #8c8c8c;
+    min-height: 125px;
   }
 
-  &-play {
-    &.disabled {
-      color: #e2e2e2;
+  .controls {
+    display: flex;
+    justify-content: center;
+
+    .button {
+      border-radius: 50%;
+      font-size: 3rem;
+      font-weight: bold;
+      text-align: center;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      padding: 30px 35px;
+      cursor: pointer;
+      background-color: black;
+      color: white;
     }
   }
 
@@ -37,14 +49,15 @@ a {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: space-evenly;
     margin: 10px auto;
   }
 
   &-track {
     text-align: center;
     background-color: #e2e2e2;
-    margin: 0 5px;
+    margin: 0 5px 25px 0;
+    width: 20%;
 
     &-name {
       padding: 10px 10px;
@@ -57,14 +70,17 @@ a {
       font-size: 0.8rem;
       justify-content: space-evenly;
       margin: 5px 0;
+      cursor: pointer;
     }
 
     .mute {
       padding: 5px 10px;
+      border-top: 1px solid #8c8c8c;
       cursor: pointer;
+      background-color: #8c8c8c;
 
       &.muted {
-        background-color: red;
+        background-color: #e2e2e2;
       }
     }
   }
