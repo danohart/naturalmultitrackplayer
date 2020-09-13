@@ -5,38 +5,62 @@ import styles from "../styles/Home.module.scss";
 
 export default function Home() {
   const tisSoSweet = [
-    new Howl({
-      src: ["/tissosweet/Acoustic_1.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Bass_1.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Carter_1.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Drums.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Electric_1.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Mando_1.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Piano_1.wav"],
-      preload: true,
-    }),
-    new Howl({
-      src: ["/tissosweet/Stacks.wav"],
-      preload: true,
-    }),
+    {
+      track: new Howl({
+        src: ["/tissosweet/Acoustic_1.wav"],
+        preload: true,
+      }),
+      name: "Acoustic",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Bass_1.wav"],
+        preload: true,
+      }),
+      name: "Bass",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Carter_1.wav"],
+        preload: true,
+      }),
+      name: "Carter",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Drums.wav"],
+        preload: true,
+      }),
+      name: "Drums",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Electric_1.wav"],
+        preload: true,
+      }),
+      name: "Electric_1",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Mando_1.wav"],
+        preload: true,
+      }),
+      name: "Mando",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Piano_1.wav"],
+        preload: true,
+      }),
+      name: "Piano",
+    },
+    {
+      track: new Howl({
+        src: ["/tissosweet/Stacks.wav"],
+        preload: true,
+      }),
+      name: "Stacks",
+    },
   ];
 
   return (
@@ -46,8 +70,10 @@ export default function Home() {
         <link rel='icon' href='/favicon.ico' />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>Multitrack Player</h1>
+      <main className='main'>
+        <div className='content'>
+          <h1 className='content-title'>Multitrack Player</h1>
+        </div>
         <Player song={tisSoSweet} />
       </main>
 

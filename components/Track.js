@@ -25,18 +25,41 @@ export default function Mute(props) {
     song.volume(volume);
   }
 
-  return (
-    <div className={`player-track`}>
-      <div className='player-track-name'>Track {props.track.key + 1}</div>
-      <div className='player-track-volume'>
-        <div onClick={() => minusVolume(props.track.song)}>
-          <FontAwesomeIcon icon={faMinus} />
-        </div>
-        <div>Vol</div>
-        <div onClick={() => plusVolume(props.track.song)}>
+  function getVolume() {
+    return (
+      <div
+        className='player-track-volume'
+        style={{
+          background: `linear-gradient(to top, #1b294c ${
+            Math.round((volume / maxVolume) * 100) + "%"
+          }, transparent 0%)`,
+        }}
+      >
+        <div
+          className='player-track-volume-control'
+          onClick={() => plusVolume(props.track.song)}
+        >
           <FontAwesomeIcon icon={faPlus} />
         </div>
+        <div className='player-track-volume-description'>
+          Vol:{" "}
+          {!isUnmuted ? "0%" : Math.round((volume / maxVolume) * 100) + "%"}
+        </div>
+
+        <div
+          className='player-track-volume-control'
+          onClick={() => minusVolume(props.track.song)}
+        >
+          <FontAwesomeIcon icon={faMinus} />
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className={`player-track ${!isUnmuted ? "muted" : ""}`}>
+      {getVolume()}
+      <div className='player-track-name'>{props.track.name}</div>
       <div
         className={isUnmuted ? "mute" : "mute muted"}
         onClick={() => muteTrack(props.track.song)}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Track from "./Track";
+import Setlist from "./Setlist";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPause, faStop } from "@fortawesome/free-solid-svg-icons";
@@ -10,61 +11,86 @@ export default function Player(props) {
 
   useEffect(() => {
     setInterval(function () {
-      if (props.song[props.song.length - 1].state() === "loaded")
+      if (props.song[props.song.length - 1].track.state() === "loaded")
         setIsLoaded(true);
     }, 1000);
-  }, []);
+  });
 
   function allSounds(action) {
     if (action === "play") {
-      if (props.song[props.song.length - 1].state() === "loading") return null;
+      if (props.song[props.song.length - 1].track.state() === "loading")
+        return null;
     }
-    setIsPaused(false), props.song.map((track) => track.play());
+    setIsPaused(false), props.song.map((song) => song.track.play());
     if (action === "pause")
-      setIsPaused(true), props.song.map((track) => track.pause());
+      setIsPaused(true), props.song.map((song) => song.track.pause());
     if (action === "stop")
-      setIsPaused(true), props.song.map((track) => track.stop());
+      setIsPaused(true), props.song.map((song) => song.track.stop());
 
     return action;
   }
 
+  function getSongLength(duration) {
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration - minutes * 60;
+
+    return minutes + ":" + seconds.toFixed(0);
+  }
+
   return (
     <div className='player'>
-      {isLoaded ? (
-        <div className='controls'>
-          {isPaused ? (
-            <div
-              className={`player-play button ${isLoaded ? "" : "disabled"}`}
-              onClick={() => allSounds("play")}
-            >
-              {isLoaded ? (
-                <span>
-                  <FontAwesomeIcon icon={faPlay} />
-                </span>
+      <div className='col-1'>
+        <div className='player-tracks'>
+          {props.song.map((song, index) => (
+            <Track
+              key={index}
+              track={{ song: song.track, key: index, name: song.name }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className='col-2'>
+        <Setlist />
+        {isLoaded ? (
+          <div className='controls'>
+            <div className='player-buttons'>
+              {isPaused ? (
+                <div
+                  className={`player-play button ${isLoaded ? "" : "disabled"}`}
+                  onClick={() => allSounds("play")}
+                >
+                  {isLoaded ? (
+                    <span>
+                      <FontAwesomeIcon icon={faPlay} />
+                    </span>
+                  ) : (
+                    <span>Loading Track</span>
+                  )}
+                </div>
               ) : (
-                <span>Loading Track</span>
+                <div
+                  className='player-pause button disabled'
+                  onClick={() => allSounds("pause")}
+                >
+                  <FontAwesomeIcon icon={faPause} />
+                </div>
+              )}
+              <div
+                className={`player-stop button ${isPaused ? "disabled" : ""}`}
+                onClick={() => allSounds("stop")}
+              >
+                <FontAwesomeIcon icon={faStop} />
+              </div>
+            </div>
+            <div className='player-length'>
+              {getSongLength(
+                props.song[props.song.length - 1].track.duration()
               )}
             </div>
-          ) : (
-            <div
-              className='player-pause button'
-              onClick={() => allSounds("pause")}
-            >
-              <FontAwesomeIcon icon={faPause} />
-            </div>
-          )}
-          <div className='player-stop button' onClick={() => allSounds("stop")}>
-            <FontAwesomeIcon icon={faStop} />
           </div>
-        </div>
-      ) : (
-        <div className='player-loading'>Loading Tracks</div>
-      )}
-
-      <div className='player-tracks'>
-        {props.song.map((track, index) => (
-          <Track key={index} track={{ song: track, key: index }} />
-        ))}
+        ) : (
+          <div className='player-loading'>Loading Tracks</div>
+        )}
       </div>
     </div>
   );
