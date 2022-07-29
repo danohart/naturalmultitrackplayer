@@ -132,6 +132,12 @@ main {
       &.disabled {
         background-color: $primary-color-alt;
       }
+
+      &.player-play {
+        svg {
+          margin-left: 5px;
+        }
+      }
     }
   }
 

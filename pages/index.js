@@ -2,61 +2,78 @@ import Head from "next/head";
 import { Howl, Howler } from "howler";
 import Player from "../components/Player";
 import styles from "../styles/Home.module.scss";
+import { useEffect } from "react";
 
 export default function Home() {
   const tisSoSweet = [
     {
       track: new Howl({
-        src: ["/tissosweet/Acoustic_1.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Acoustic_1.wav",
+        ],
         preload: true,
       }),
       name: "Acoustic",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Bass_1.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Bass_1.wav",
+        ],
         preload: true,
       }),
       name: "Bass",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Carter_1.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Carter_1.wav",
+        ],
         preload: true,
       }),
       name: "Carter",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Drums.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Drums.wav",
+        ],
         preload: true,
       }),
       name: "Drums",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Electric_1.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Electric_1.wav",
+        ],
         preload: true,
       }),
       name: "Electric_1",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Mando_1.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Mando_1.wav",
+        ],
         preload: true,
       }),
       name: "Mando",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Piano_1.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Piano_1.wav",
+        ],
         preload: true,
       }),
       name: "Piano",
     },
     {
       track: new Howl({
-        src: ["/tissosweet/Stacks.wav"],
+        src: [
+          "https://res.cloudinary.com/danielhart/video/upload/v1659120121/naturalmusic/tissosweet/Stacks.wav",
+        ],
         preload: true,
       }),
       name: "Stacks",

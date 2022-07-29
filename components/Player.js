@@ -8,7 +8,6 @@ import { faPlay, faPause, faStop } from "@fortawesome/free-solid-svg-icons";
 export default function Player(props) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
-
   useEffect(() => {
     setInterval(function () {
       if (props.song[props.song.length - 1].track.state() === "loaded")
@@ -18,14 +17,17 @@ export default function Player(props) {
 
   function allSounds(action) {
     if (action === "play") {
-      if (props.song[props.song.length - 1].track.state() === "loading")
+      if (props.song[props.song.length - 1].track.state() === "loading") {
         return null;
+      }
+      setIsPaused(false), props.song.map((song) => song.track.play());
     }
-    setIsPaused(false), props.song.map((song) => song.track.play());
-    if (action === "pause")
+    if (action === "pause") {
       setIsPaused(true), props.song.map((song) => song.track.pause());
-    if (action === "stop")
+    }
+    if (action === "stop") {
       setIsPaused(true), props.song.map((song) => song.track.stop());
+    }
 
     return action;
   }
@@ -83,9 +85,10 @@ export default function Player(props) {
               </div>
             </div>
             <div className='player-length'>
-              {getSongLength(
-                props.song[props.song.length - 1].track.duration()
-              )}
+              {"0:00 / " +
+                getSongLength(
+                  props.song[props.song.length - 1].track.duration()
+                )}
             </div>
           </div>
         ) : (
