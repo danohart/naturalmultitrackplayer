@@ -8,7 +8,6 @@ import { cacheSong, isSongCached } from '@/lib/storage/db';
 import { getAudioEngine } from '@/lib/audio/engine';
 import { Song } from '@/lib/types';
 import MixerControls from '@/components/mixer/MixerControls';
-import TransportControls from '@/components/mixer/TransportControls';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
 
 type LoadingState = 'idle' | 'checking-cache' | 'downloading' | 'loading-audio' | 'ready' | 'error';
