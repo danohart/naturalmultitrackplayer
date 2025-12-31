@@ -260,7 +260,7 @@ export default function MixerContent() {
   }
 
   return (
-    <div className="min-h-screen bg-primary text-white pb-48">
+    <div className="min-h-screen bg-gray-lightest text-white pb-48">
       {/* Header with Song Info and Transport Controls */}
       <div className="bg-primary-alt border-b border-gray-dark p-4 sticky top-0 z-100">
         <div className="max-w-7xl mx-auto">
