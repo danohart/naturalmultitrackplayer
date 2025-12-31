@@ -100,7 +100,7 @@ export default function MixerControls({
         {tracks.map(renderTrack)}
       </div>
       {/* Reset Button */}
-      <div className=" flex justify-end sticky bottom-10">
+      <div className=" flex justify-end sticky mt-4 bottom-10">
         <button
           onClick={onReset}
           disabled={disabled}
