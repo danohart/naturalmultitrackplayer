@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
+import Navigation from "@/components/ui/Navigation";
 
 export const metadata: Metadata = {
   title: "Natural Mixer",
@@ -55,6 +56,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
       </head>
       <body className="antialiased">
+        <Navigation />
         {children}
         <InstallPrompt />
         <OfflineIndicator />
