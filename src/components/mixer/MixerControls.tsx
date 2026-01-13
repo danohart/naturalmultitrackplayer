@@ -52,7 +52,7 @@ export default function MixerControls({
               onChange={(e) => onVolumeChange(track.converted_filename, parseInt(e.target.value) / 100)}
               disabled={disabled}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              style={{ writingMode: 'vertical-lr', direction: 'rtl', WebkitAppearance: 'slider-vertical' } as React.CSSProperties}
+              style={{ writingMode: 'vertical-lr', direction: 'rtl' } as React.CSSProperties}
             />
           </div>
         </div>
