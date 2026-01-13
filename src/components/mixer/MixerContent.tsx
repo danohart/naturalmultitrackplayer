@@ -266,7 +266,7 @@ export default function MixerContent() {
           <div className="flex items-center justify-between gap-6">
             {/* Song Info - Left Side */}
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-secondary">{song.song_name}</h1>
+              <h1 className="text-2xl font-bold text-primary">{song.song_name}</h1>
               <div className="text-sm text-gray-light mt-1">
                 {song.bpm && `${song.bpm} BPM`}
                 {song.key && ` • Key: ${song.key}`}

@@ -17,7 +17,7 @@ export default function LoadingOverlay({ state, message, progress, error }: Load
     return (
       <div className="fixed inset-0 bg-primary flex items-center justify-center z-50">
         <div className="text-center max-w-md">
-          <div className="text-secondary-bold text-6xl mb-4">⚠️</div>
+          <div className="text-primary-bold text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-white mb-2">Error</h2>
           <p className="text-gray-light mb-4">{error}</p>
           <button

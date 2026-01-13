@@ -65,7 +65,7 @@ export default function InstallPrompt() {
         >
           ✕
         </button>
-        <h3 className="font-bold text-secondary mb-2">Install Natural Mixer</h3>
+        <h3 className="font-bold text-primary mb-2">Install Natural Mixer</h3>
         <p className="text-sm text-gray-light mb-3">
           Install this app on your iPad for the best experience:
         </p>
@@ -94,7 +94,7 @@ export default function InstallPrompt() {
         >
           ✕
         </button>
-        <h3 className="font-bold text-secondary mb-2">Install Natural Mixer</h3>
+        <h3 className="font-bold text-primary mb-2">Install Natural Mixer</h3>
         <p className="text-sm text-gray-light mb-3">
           Install this app for quick access and offline use
         </p>

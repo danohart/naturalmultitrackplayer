@@ -17,7 +17,7 @@ export default function SongCard({ song, isCached, onClick }: SongCardProps) {
     >
       {/* Header with cached badge */}
       <div className="flex items-start justify-between mb-3">
-        <h3 className="font-bold text-lg text-white group-hover:text-secondary transition-colors flex-1">
+        <h3 className="font-bold text-lg text-white group-hover:text-primary transition-colors flex-1">
           {song.song_name}
         </h3>
         {isCached && (
@@ -31,19 +31,19 @@ export default function SongCard({ song, isCached, onClick }: SongCardProps) {
       <div className="space-y-2 text-sm text-gray-light">
         {song.bpm && (
           <div className="flex items-center gap-2">
-            <span className="text-secondary">♪</span>
+            <span className="text-primary">♪</span>
             <span>{song.bpm} BPM</span>
           </div>
         )}
         {song.key && (
           <div className="flex items-center gap-2">
-            <span className="text-secondary">♯</span>
+            <span className="text-primary">♯</span>
             <span>Key: {song.key}</span>
           </div>
         )}
         {song.time_signature && (
           <div className="flex items-center gap-2">
-            <span className="text-secondary">⏱</span>
+            <span className="text-primary">⏱</span>
             <span>{song.time_signature}</span>
           </div>
         )}
@@ -61,7 +61,7 @@ export default function SongCard({ song, isCached, onClick }: SongCardProps) {
 
       {/* Hover indicator */}
       <div className="mt-3 text-center">
-        <span className="text-secondary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
           Click to open mixer →
         </span>
       </div>
