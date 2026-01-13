@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Natural Mixer
+
+A Progressive Web App (PWA) for multi-track audio mixing during live performances. Browse your song library, download tracks for offline use, and mix individual stems in real-time.
+
+## Features
+
+- **Song Library** - Browse and search songs with filters for musical key and BPM
+- **Multi-track Mixer** - Play multiple audio tracks in perfect sync with individual volume controls, mute, and solo
+- **Offline Support** - Download songs to your device for offline playback using IndexedDB
+- **Installable PWA** - Install on iOS, Android, or desktop for a native app experience
+- **Setlist Management** - Create and organize setlists for your performances
+- **PDF Resources** - Access chord charts and lyrics alongside your tracks
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org) 16
+- [React](https://react.dev) 19
+- [TypeScript](https://www.typescriptlang.org)
+- [Tailwind CSS](https://tailwindcss.com)
+- [Dexie](https://dexie.org) (IndexedDB wrapper for offline storage)
+- [Zustand](https://zustand-demo.pmnd.rs) (state management)
+- [next-pwa](https://github.com/shadowwalker/next-pwa) (service worker)
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/                  # Next.js app router pages
+│   ├── library/          # Song library with search and pagination
+│   ├── mixer/            # Multi-track audio mixer
+│   └── setlist/          # Setlist management
+├── components/           # React components
+│   ├── library/          # Library-specific components
+│   ├── mixer/            # Mixer controls and UI
+│   └── ui/               # Shared UI components
+└── lib/
+    ├── api/              # WordPress API integration
+    ├── audio/            # Web Audio API engine
+    ├── hooks/            # Custom React hooks
+    ├── storage/          # IndexedDB/Dexie storage
+    └── types/            # TypeScript type definitions
+```

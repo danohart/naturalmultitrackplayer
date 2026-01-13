@@ -45,7 +45,6 @@ export default function Navigation() {
           )}
         </button>
 
-        {/* Center: App name */}
         <h1 className="text-lg sm:text-xl font-semibold text-gray-lightest flex items-center gap-2">
           <Music size={24} className="text-gray-lightest" />
           <span>Natural Mixer</span>
