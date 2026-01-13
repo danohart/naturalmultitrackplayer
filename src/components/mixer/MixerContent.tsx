@@ -173,6 +173,14 @@ export default function MixerContent() {
     setCurrentTime(0);
   }, []);
 
+  const handleBackToLibrary = useCallback(() => {
+    const engine = getAudioEngine();
+    engine.stop();
+    setIsPlaying(false);
+    setCurrentTime(0);
+    router.push('/library');
+  }, [router]);
+
   const handleSeek = useCallback((time: number) => {
     const engine = getAudioEngine();
     engine.seek(time);
@@ -287,7 +295,7 @@ export default function MixerContent() {
               </div>
             </div>
             <button
-              onClick={() => router.push('/library')}
+              onClick={handleBackToLibrary}
               className="flex-shrink-0 p-2 rounded-lg bg-gray-dark hover:bg-gray-700 transition-colors"
               aria-label="Back to library"
             >
