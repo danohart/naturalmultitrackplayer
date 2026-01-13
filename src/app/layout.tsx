@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
@@ -18,13 +18,6 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   themeColor: "#1b294c",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -34,6 +27,14 @@ export const metadata: Metadata = {
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -51,9 +52,6 @@ export default function RootLayout({
         
         {/* Prevent iOS from auto-detecting phone numbers */}
         <meta name="format-detection" content="telephone=no" />
-        
-        {/* Disable zoom on iOS */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
       </head>
       <body className="antialiased">
         <Navigation />
