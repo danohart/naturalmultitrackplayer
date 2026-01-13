@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchSongBySlug } from '@/lib/api/wordpress';
 import { cacheSong, isSongCached } from '@/lib/storage/db';
 import { getAudioEngine } from '@/lib/audio/engine';
@@ -14,6 +14,7 @@ type LoadingState = 'idle' | 'checking-cache' | 'downloading' | 'loading-audio' 
 
 export default function MixerContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const songSlug = searchParams.get('song') || 'what-hes-done';
 
   const [song, setSong] = useState<Song | null>(null);
@@ -181,7 +182,7 @@ export default function MixerContent() {
   const handleVolumeChange = useCallback((trackFilename: string, volume: number) => {
     const engine = getAudioEngine();
     engine.setTrackVolume(trackFilename, volume);
-    
+
     setTrackStates((prev) => ({
       ...prev,
       [trackFilename]: { ...prev[trackFilename], volume },
@@ -259,68 +260,48 @@ export default function MixerContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-lightest text-white pb-48">
-      {/* Header with Song Info and Transport Controls */}
-      <div className="bg-primary-alt border-b border-gray-dark py-2 px-4 sticky top-0 z-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between gap-6">
-            {/* Song Info - Left Side */}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-lightest">{song.song_name}</h1>
-              <div className="text-sm text-gray-light mt-1">
-                {song.bpm && `${song.bpm} BPM`}
-                {song.key && ` • Key: ${song.key}`}
-                {song.time_signature && ` • ${song.time_signature}`}
+    <div className="h-screen bg-gray-lightest text-white flex overflow-hidden">
+      {/* Left Panel - Track Mixer */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <MixerControls
+          tracks={song.tracks}
+          trackStates={trackStates}
+          onVolumeChange={handleVolumeChange}
+          onMuteToggle={handleMuteToggle}
+          onSoloToggle={handleSoloToggle}
+          disabled={false}
+        />
+      </div>
+
+      {/* Right Panel - Song Info, Transport, Future Setlist */}
+      <div className="w-72 bg-primary-alt border-l border-gray-dark flex flex-col">
+        {/* Song Info */}
+        <div className="p-4 border-b border-gray-dark">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-lightest leading-tight">{song.song_name}</h1>
+              <div className="text-sm text-gray-light mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                {song.bpm && <span>{song.bpm} BPM</span>}
+                {song.key && <span>Key: {song.key}</span>}
+                {song.time_signature && <span>{song.time_signature}</span>}
               </div>
             </div>
-
-            {/* Transport Controls - Right Side */}
-            <div className="flex items-center gap-4">
-              {/* Stop Button */}
-              <button
-                onClick={handleStop}
-                className="w-12 h-12 flex items-center justify-center bg-gray-dark hover:bg-gray-700 rounded-lg transition-colors"
-                title="Stop"
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="6" y="6" width="8" height="8" />
-                </svg>
-              </button>
-
-              {/* Play/Pause Button */}
-              {isPlaying ? (
-                <button
-                  onClick={handlePause}
-                  className="w-16 h-16 flex items-center justify-center bg-yellow-600 hover:bg-yellow-700 rounded-full transition-colors shadow-lg"
-                  title="Pause"
-                >
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6 4h3v12H6V4zm5 0h3v12h-3V4z" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  onClick={handlePlay}
-                  className="w-16 h-16 flex items-center justify-center bg-green-600 hover:bg-green-700 rounded-full transition-colors shadow-lg"
-                  title="Play"
-                >
-                  <svg className="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6 4l10 6-10 6V4z" />
-                  </svg>
-                </button>
-              )}
-
-              {/* Current Time / Duration */}
-              <div className="text-sm text-gray-light min-w-24 text-right">
-                <div className="font-mono">
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </div>
-              </div>
-            </div>
+            <button
+              onClick={() => router.push('/library')}
+              className="flex-shrink-0 p-2 rounded-lg bg-gray-dark hover:bg-gray-700 transition-colors"
+              aria-label="Back to library"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
+        </div>
 
-          {/* Progress Bar - Below Song Info */}
-          <div className="mt-8">
+        {/* Transport Controls */}
+        <div className="p-4 border-b border-gray-dark">
+          {/* Progress Bar */}
+          <div className="mb-4">
             <input
               type="range"
               min="0"
@@ -329,20 +310,63 @@ export default function MixerContent() {
               onChange={(e) => handleSeek(parseFloat(e.target.value))}
               className="w-full h-10 bg-gray-dark rounded-lg appearance-none cursor-pointer slider"
             />
+            <div className="flex justify-between text-xs text-gray-light mt-1 font-mono">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+
+          {/* Play/Pause Button - Wide */}
+          {isPlaying ? (
+            <button
+              onClick={handlePause}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors shadow-lg text-lg font-semibold"
+            >
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 4h3v12H6V4zm5 0h3v12h-3V4z" />
+              </svg>
+              PAUSE
+            </button>
+          ) : (
+            <button
+              onClick={handlePlay}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-lg text-lg font-semibold"
+            >
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 4l10 6-10 6V4z" />
+              </svg>
+              PLAY
+            </button>
+          )}
+
+          {/* Stop Button - Wide */}
+          <button
+            onClick={handleStop}
+            className="w-full h-12 mt-2 flex items-center justify-center gap-3 bg-gray-dark hover:bg-gray-700 rounded-lg transition-colors text-base font-medium"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <rect x="6" y="6" width="8" height="8" />
+            </svg>
+            STOP
+          </button>
+
+          {/* Reset Button */}
+          <button
+            onClick={handleReset}
+            className="w-full h-10 mt-2 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary-bold text-primary rounded-lg transition-colors text-sm font-medium"
+          >
+            Reset Mixer
+          </button>
+        </div>
+
+        {/* Future Setlist Area */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <h2 className="text-sm font-semibold text-gray-light uppercase tracking-wide mb-3">Setlist</h2>
+          <div className="text-sm text-gray-light italic">
+            Setlist coming soon...
           </div>
         </div>
       </div>
-
-      {/* Mixer Controls */}
-      <MixerControls
-        tracks={song.tracks}
-        trackStates={trackStates}
-        onVolumeChange={handleVolumeChange}
-        onMuteToggle={handleMuteToggle}
-        onSoloToggle={handleSoloToggle}
-        onReset={handleReset}
-        disabled={false}
-      />
     </div>
   );
 }

@@ -7,8 +7,8 @@ export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Don't show navigation on home page
-  if (pathname === '/') {
+  // Don't show navigation on home page or mixer (mixer uses full screen)
+  if (pathname === '/' || pathname.startsWith('/mixer')) {
     return null;
   }
 
