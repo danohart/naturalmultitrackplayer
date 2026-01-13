@@ -63,29 +63,31 @@ export default function MixerControls({
         <div className="text-center text-xs text-gray-400 mb-3">{volumePercent}%</div>
 
         {/* Mute/Solo Buttons */}
-        <div className="space-y-2">
+        <div className="flex align-center space-x-2">
           <button
             onClick={() => onMuteToggle(track.converted_filename)}
             disabled={disabled}
-            className={`w-full py-2 px-3 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`w-1/2 py-3 px-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               state.muted
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
             }`}
           >
-            {state.muted ? 'MUTED' : 'MUTE'}
+            <span className="md:hidden">M</span>
+            <span className="hidden md:inline">{state.muted ? 'MUTED' : 'MUTE'}</span>
           </button>
 
           <button
             onClick={() => onSoloToggle(track.converted_filename)}
             disabled={disabled}
-            className={`w-full py-2 px-3 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`w-1/2 py-3 px-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               state.solo
                 ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                 : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
             }`}
           >
-            {state.solo ? 'SOLO' : 'SOLO'}
+            <span className="md:hidden">S</span>
+            <span className="hidden md:inline">SOLO</span>
           </button>
         </div>
       </div>
@@ -96,7 +98,7 @@ export default function MixerControls({
     <div className="max-w-7xl mx-auto p-6 pb-32">
      
       
-      <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+      <div className="grid grid-cols-6 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
         {tracks.map(renderTrack)}
       </div>
       {/* Reset Button */}

@@ -261,12 +261,12 @@ export default function MixerContent() {
   return (
     <div className="min-h-screen bg-gray-lightest text-white pb-48">
       {/* Header with Song Info and Transport Controls */}
-      <div className="bg-primary-alt border-b border-gray-dark p-4 sticky top-0 z-100">
+      <div className="bg-primary-alt border-b border-gray-dark py-2 px-4 sticky top-0 z-100">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between gap-6">
             {/* Song Info - Left Side */}
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-primary">{song.song_name}</h1>
+              <h1 className="text-2xl font-bold text-gray-lightest">{song.song_name}</h1>
               <div className="text-sm text-gray-light mt-1">
                 {song.bpm && `${song.bpm} BPM`}
                 {song.key && ` • Key: ${song.key}`}
