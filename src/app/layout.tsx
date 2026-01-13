@@ -17,7 +17,6 @@ export const metadata: Metadata = {
     telephone: false,
   },
   manifest: "/manifest.json",
-  themeColor: "#1b294c",
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -35,6 +34,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#1b294c",
 };
 
 export default function RootLayout({

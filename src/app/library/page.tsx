@@ -1,7 +1,7 @@
 // src/app/library/page.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAllSongs } from '@/lib/api/wordpress';
 import { isSongCached, getStorageUsed } from '@/lib/storage/db';
@@ -11,7 +11,7 @@ import SearchBar from '@/components/library/SearchBar';
 
 const SONGS_PER_PAGE = 24;
 
-export default function LibraryPage() {
+function LibraryPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -309,5 +309,22 @@ export default function LibraryPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LibraryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-primary flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-white text-lg">Loading song library...</p>
+          </div>
+        </div>
+      }
+    >
+      <LibraryPageContent />
+    </Suspense>
   );
 }
