@@ -72,7 +72,7 @@ export default function MixerControls({
             }`}
           >
             <span className="md:hidden">M</span>
-            <span className="hidden md:inline">{state.muted ? 'MUTED' : 'MUTE'}</span>
+            <span className="hidden md:inline">MUTE</span>
           </button>
 
           <button

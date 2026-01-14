@@ -198,38 +198,70 @@ export default function MixerContent() {
   }, []);
 
   const handleMuteToggle = useCallback((trackFilename: string) => {
-    const currentMuted = trackStates[trackFilename]?.muted || false;
-    const engine = getAudioEngine();
-    engine.setTrackMuted(trackFilename, !currentMuted);
-
-    setTrackStates((prev) => ({
-      ...prev,
-      [trackFilename]: { ...prev[trackFilename], muted: !currentMuted },
-    }));
-  }, [trackStates]);
-
-  const handleSoloToggle = useCallback((trackFilename: string) => {
-    const currentSolo = trackStates[trackFilename]?.solo || false;
-    const newSoloState = !currentSolo;
+    const currentState = trackStates[trackFilename];
+    const currentMuted = currentState?.muted || false;
+    const newMuted = !currentMuted;
 
     const engine = getAudioEngine();
     const newStates = { ...trackStates };
 
-    Object.keys(newStates).forEach((filename) => {
-      if (newSoloState) {
-        const shouldMute = filename !== trackFilename;
-        engine.setTrackMuted(filename, shouldMute);
-        newStates[filename] = {
-          ...newStates[filename],
-          solo: filename === trackFilename,
-        };
-      } else {
-        engine.setTrackMuted(filename, false);
-        newStates[filename] = {
-          ...newStates[filename],
-          solo: false,
-        };
-      }
+    // If turning on mute, turn off solo for this track
+    if (newMuted && currentState?.solo) {
+      newStates[trackFilename] = {
+        ...currentState,
+        muted: true,
+        solo: false,
+      };
+    } else {
+      newStates[trackFilename] = {
+        ...currentState,
+        muted: newMuted,
+      };
+    }
+
+    // Recalculate audio muting based on solo/mute states
+    const soloedTracks = Object.entries(newStates).filter(([, s]) => s.solo);
+    const hasSoloedTracks = soloedTracks.length > 0;
+
+    Object.entries(newStates).forEach(([filename, state]) => {
+      // Track is audio-muted if: manually muted OR (has soloed tracks AND this isn't one)
+      const shouldMute = state.muted || (hasSoloedTracks && !state.solo);
+      engine.setTrackMuted(filename, shouldMute);
+    });
+
+    setTrackStates(newStates);
+  }, [trackStates]);
+
+  const handleSoloToggle = useCallback((trackFilename: string) => {
+    const currentState = trackStates[trackFilename];
+    const currentSolo = currentState?.solo || false;
+    const newSolo = !currentSolo;
+
+    const engine = getAudioEngine();
+    const newStates = { ...trackStates };
+
+    // If turning on solo, turn off mute for this track
+    if (newSolo && currentState?.muted) {
+      newStates[trackFilename] = {
+        ...currentState,
+        solo: true,
+        muted: false,
+      };
+    } else {
+      newStates[trackFilename] = {
+        ...currentState,
+        solo: newSolo,
+      };
+    }
+
+    // Recalculate audio muting based on solo/mute states
+    const soloedTracks = Object.entries(newStates).filter(([, s]) => s.solo);
+    const hasSoloedTracks = soloedTracks.length > 0;
+
+    Object.entries(newStates).forEach(([filename, state]) => {
+      // Track is audio-muted if: manually muted OR (has soloed tracks AND this isn't one)
+      const shouldMute = state.muted || (hasSoloedTracks && !state.solo);
+      engine.setTrackMuted(filename, shouldMute);
     });
 
     setTrackStates(newStates);
