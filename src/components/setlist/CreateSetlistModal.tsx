@@ -72,7 +72,7 @@ export default function CreateSetlistModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Sunday Morning Practice"
+              placeholder="e.g., Saturday Morning Practice"
               className="w-full bg-primary border-2 border-gray-dark focus:border-secondary rounded-lg px-4 py-3 text-white placeholder-gray-light outline-none transition-colors"
               maxLength={100}
             />

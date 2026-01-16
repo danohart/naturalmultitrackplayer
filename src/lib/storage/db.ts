@@ -31,11 +31,25 @@ export class MixerDatabase extends Dexie {
 export const db = new MixerDatabase();
 
 /**
- * Check if a song is fully cached
+ * Check if a song metadata is cached (quick check)
  */
 export async function isSongCached(songId: number): Promise<boolean> {
   const cached = await db.cachedSongs.get(songId);
   return !!cached;
+}
+
+/**
+ * Check if a song is fully cached (verifies all tracks exist)
+ */
+export async function isSongFullyCached(
+  songId: number,
+  trackCount: number
+): Promise<boolean> {
+  const cachedTrackCount = await db.cachedTracks
+    .where('songId')
+    .equals(songId)
+    .count();
+  return cachedTrackCount === trackCount;
 }
 
 /**

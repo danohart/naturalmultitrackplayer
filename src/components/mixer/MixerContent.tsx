@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchSongBySlug, fetchSongsBySlugs } from '@/lib/api/wordpress';
-import { isSongCached, getSetlist } from '@/lib/storage/db';
+import { isSongCached, getSetlist, db } from '@/lib/storage/db';
 import { getAudioEngine } from '@/lib/audio/engine';
 import { Song, HydratedSetlist } from '@/lib/types';
 import MixerControls from '@/components/mixer/MixerControls';
@@ -59,9 +59,30 @@ export default function MixerContent() {
           updated_at: setlistData.updated_at,
         };
         setCurrentSetlist(hydrated);
+
+        // Preload all setlist songs in the background
+        preloadSetlistSongs(songs);
       }
     } catch (err) {
       console.error('Failed to load setlist:', err);
+    }
+  };
+
+  // Preload all songs in the setlist for instant switching
+  const preloadSetlistSongs = async (songs: Song[]) => {
+    const engine = getAudioEngine();
+    for (const s of songs) {
+      // Skip current song (it's already loaded)
+      if (s.slug === songSlug) continue;
+
+      // Check if song is cached in IndexedDB
+      const cached = await isSongCached(s.id);
+      if (cached) {
+        // Preload in background (don't await - fire and forget)
+        engine.preloadSong(s.id, s.tracks).catch((err) => {
+          console.warn(`Failed to preload ${s.song_name}:`, err);
+        });
+      }
     }
   };
 
@@ -133,12 +154,11 @@ export default function MixerContent() {
     }));
 
     const totalSize = tracks.reduce((sum, t) => sum + t.size_mb, 0);
-    let downloadedSize = 0;
 
-    for (let i = 0; i < tracks.length; i++) {
-      const track = tracks[i];
-      setLoadingMessage(`Downloading ${track.filename}... (${i + 1}/${tracks.length})`);
+    // Download all tracks in parallel
+    setLoadingMessage(`Downloading ${tracks.length} tracks...`);
 
+    const downloadPromises = tracks.map(async (track) => {
       const response = await fetch(track.url);
       if (!response.ok) {
         throw new Error(`Failed to download ${track.filename}`);
@@ -146,7 +166,6 @@ export default function MixerContent() {
 
       const arrayBuffer = await response.arrayBuffer();
 
-      const { db } = await import('@/lib/storage/db');
       await db.cachedTracks.put({
         songId: songData.id,
         trackFilename: track.filename,
@@ -154,12 +173,12 @@ export default function MixerContent() {
         cachedAt: new Date().toISOString(),
       });
 
-      downloadedSize += track.size_mb;
-      const progress = 35 + Math.floor((downloadedSize / totalSize) * 25);
-      setLoadingProgress(progress);
-    }
+      return track.size_mb;
+    });
 
-    const { db } = await import('@/lib/storage/db');
+    await Promise.all(downloadPromises);
+
+    // Save song metadata
     await db.cachedSongs.put({
       id: songData.id,
       slug: songData.slug,
