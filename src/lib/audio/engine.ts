@@ -139,7 +139,10 @@ export class AudioEngine {
   private enforceMemoryLimit(): void {
     while (this.decodedCache.size > this.maxCachedSongs) {
       // Get the first (oldest) entry
-      const firstKey = this.decodedCache.keys().next().value;
+      const firstKey = this.decodedCache.keys().next().value as number | undefined;
+
+      // Safety check - shouldn't happen but TypeScript wants it
+      if (firstKey === undefined) break;
 
       // Don't remove the currently active song
       if (firstKey !== this.activeSongId) {
