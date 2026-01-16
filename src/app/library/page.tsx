@@ -8,6 +8,7 @@ import { isSongCached, getStorageUsed } from '@/lib/storage/db';
 import { Song } from '@/lib/types';
 import SongCard from '@/components/library/SongCard';
 import SearchBar from '@/components/library/SearchBar';
+import AddToSetlistModal from '@/components/library/AddToSetlistModal';
 
 const SONGS_PER_PAGE = 24;
 
@@ -25,6 +26,7 @@ function LibraryPageContent() {
   const [cachedSongIds, setCachedSongIds] = useState<Set<number>>(new Set());
   const [storageUsed, setStorageUsed] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [addToSetlistSong, setAddToSetlistSong] = useState<Song | null>(null);
 
   // Update URL with new params
   const updateUrl = useCallback((updates: Record<string, string | null>) => {
@@ -220,6 +222,7 @@ function LibraryPageContent() {
                   song={song}
                   isCached={cachedSongIds.has(song.id)}
                   onClick={() => handleSongClick(song)}
+                  onAddToSetlist={() => setAddToSetlistSong(song)}
                 />
               ))}
             </div>
@@ -308,6 +311,13 @@ function LibraryPageContent() {
           </>
         )}
       </div>
+
+      {/* Add to Setlist Modal */}
+      <AddToSetlistModal
+        song={addToSetlistSong}
+        isOpen={addToSetlistSong !== null}
+        onClose={() => setAddToSetlistSong(null)}
+      />
     </div>
   );
 }

@@ -7,14 +7,21 @@ interface SongCardProps {
   song: Song;
   isCached: boolean;
   onClick: () => void;
+  onAddToSetlist?: () => void;
 }
 
-export default function SongCard({ song, isCached, onClick }: SongCardProps) {
+export default function SongCard({
+  song,
+  isCached,
+  onClick,
+  onAddToSetlist,
+}: SongCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-primary-alt border-2 border-gray-dark hover:border-secondary rounded-lg p-4 cursor-pointer transition-all hover:scale-105 group"
+      className="bg-primary-alt border-2 border-gray-dark hover:border-secondary rounded-lg p-4 cursor-pointer transition-all hover:scale-105 group relative"
     >
+      
       {/* Header with cached badge */}
       <div className="flex items-start justify-between mb-3">
         <h3 className="font-bold text-lg text-white group-hover:text-primary transition-colors flex-1">
@@ -59,11 +66,25 @@ export default function SongCard({ song, isCached, onClick }: SongCardProps) {
         </span>
       </div>
 
-      {/* Hover indicator */}
-      <div className="mt-3 text-center">
-        <span className="text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-          Click to open mixer →
-        </span>
+      {/* Actions */}
+      <div className="mt-3 flex gap-2">
+        {onAddToSetlist && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToSetlist();
+            }}
+            className="flex-1 bg-gray-dark hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+          >
+            + Setlist
+          </button>
+        )}
+        <button
+          onClick={onClick}
+          className="flex-1 bg-secondary hover:bg-secondary-bold text-primary py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+        >
+          Open Mixer
+        </button>
       </div>
     </div>
   );

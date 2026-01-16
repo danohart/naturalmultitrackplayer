@@ -156,13 +156,13 @@ export async function fetchSongsByIds(ids: number[]): Promise<Song[]> {
   try {
     const idsParam = ids.join(',');
     const response = await fetch(`${WP_API_ENDPOINT}?include=${idsParam}&per_page=100`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     return data
       .filter((item: any) => item.track_data)
       .map((item: any) => ({
@@ -181,4 +181,30 @@ export async function fetchSongsByIds(ids: number[]): Promise<Song[]> {
     console.error('Error fetching songs by IDs:', error);
     throw error;
   }
+}
+
+/**
+ * Fetch songs by slugs and return both found songs and missing slugs
+ */
+export async function fetchSongsBySlugs(
+  slugs: string[]
+): Promise<{ songs: Song[]; missingSlugs: string[] }> {
+  // Get all songs (uses cache when available)
+  const allSongs = await fetchAllSongs();
+  const songMap = new Map(allSongs.map((s) => [s.slug, s]));
+
+  const songs: Song[] = [];
+  const missingSlugs: string[] = [];
+
+  // Preserve order from input slugs
+  for (const slug of slugs) {
+    const song = songMap.get(slug);
+    if (song) {
+      songs.push(song);
+    } else {
+      missingSlugs.push(slug);
+    }
+  }
+
+  return { songs, missingSlugs };
 }

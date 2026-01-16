@@ -30,12 +30,34 @@ export interface Song {
   total_size_mb: number;
 }
 
+// Legacy Setlist interface (kept for migration compatibility)
 export interface Setlist {
   id: string;
   name: string;
   songs: Song[];
   created_at: string;
   updated_at: string;
+}
+
+// Lightweight setlist for storage and URL sharing
+export interface SetlistData {
+  id: string;
+  name: string;
+  songSlugs: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// Hydrated setlist with full song data (for runtime use)
+export interface HydratedSetlist extends Omit<SetlistData, 'songSlugs'> {
+  songs: Song[];
+  missingSlugs: string[];
+}
+
+// Minimal data for URL sharing
+export interface ShareableSetlist {
+  name: string;
+  slugs: string[];
 }
 
 export interface CachedTrack {

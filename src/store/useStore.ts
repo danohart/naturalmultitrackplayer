@@ -1,16 +1,20 @@
 // src/store/useStore.ts
 
 import { create } from 'zustand';
-import { Song, Setlist, TrackState } from '@/lib/types';
+import { Song, TrackState, HydratedSetlist } from '@/lib/types';
 
 interface AppState {
   // Songs
   songs: Song[];
   setSongs: (songs: Song[]) => void;
   
-  // Current setlist
-  currentSetlist: Setlist | null;
-  setCurrentSetlist: (setlist: Setlist | null) => void;
+  // Current setlist (hydrated with song data)
+  currentSetlist: HydratedSetlist | null;
+  setCurrentSetlist: (setlist: HydratedSetlist | null) => void;
+
+  // Current position in setlist
+  currentSetlistIndex: number;
+  setCurrentSetlistIndex: (index: number) => void;
   
   // Currently playing song
   currentSong: Song | null;
@@ -50,6 +54,10 @@ export const useStore = create<AppState>((set) => ({
   // Current setlist
   currentSetlist: null,
   setCurrentSetlist: (setlist) => set({ currentSetlist: setlist }),
+
+  // Current position in setlist
+  currentSetlistIndex: 0,
+  setCurrentSetlistIndex: (index) => set({ currentSetlistIndex: index }),
   
   // Currently playing song
   currentSong: null,

@@ -3,12 +3,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { fetchSongBySlug } from '@/lib/api/wordpress';
-import { cacheSong, isSongCached } from '@/lib/storage/db';
+import { fetchSongBySlug, fetchSongsBySlugs } from '@/lib/api/wordpress';
+import { isSongCached, getSetlist } from '@/lib/storage/db';
 import { getAudioEngine } from '@/lib/audio/engine';
-import { Song } from '@/lib/types';
+import { Song, HydratedSetlist } from '@/lib/types';
 import MixerControls from '@/components/mixer/MixerControls';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
+import SetlistPanel from '@/components/mixer/SetlistPanel';
 
 type LoadingState = 'idle' | 'checking-cache' | 'downloading' | 'loading-audio' | 'ready' | 'error';
 
@@ -16,8 +17,12 @@ export default function MixerContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const songSlug = searchParams.get('song') || 'what-hes-done';
+  const setlistId = searchParams.get('setlist');
+  const setlistIndexParam = searchParams.get('index');
 
   const [song, setSong] = useState<Song | null>(null);
+  const [currentSetlist, setCurrentSetlist] = useState<HydratedSetlist | null>(null);
+  const [currentSetlistIndex, setCurrentSetlistIndex] = useState(0);
   const [loadingState, setLoadingState] = useState<LoadingState>('checking-cache');
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -31,7 +36,34 @@ export default function MixerContent() {
 
   useEffect(() => {
     initializeSong();
-  }, [songSlug]);
+    if (setlistId) {
+      loadSetlist();
+    }
+    if (setlistIndexParam !== null) {
+      setCurrentSetlistIndex(parseInt(setlistIndexParam, 10) || 0);
+    }
+  }, [songSlug, setlistId, setlistIndexParam]);
+
+  const loadSetlist = async () => {
+    if (!setlistId) return;
+    try {
+      const setlistData = await getSetlist(setlistId);
+      if (setlistData && setlistData.songSlugs.length > 0) {
+        const { songs, missingSlugs } = await fetchSongsBySlugs(setlistData.songSlugs);
+        const hydrated: HydratedSetlist = {
+          id: setlistData.id,
+          name: setlistData.name,
+          songs,
+          missingSlugs,
+          created_at: setlistData.created_at,
+          updated_at: setlistData.updated_at,
+        };
+        setCurrentSetlist(hydrated);
+      }
+    } catch (err) {
+      console.error('Failed to load setlist:', err);
+    }
+  };
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -284,6 +316,20 @@ export default function MixerContent() {
     setTrackStates(newStates);
   }, [trackStates]);
 
+  const handleSetlistSongSelect = useCallback((index: number) => {
+    if (!currentSetlist || index < 0 || index >= currentSetlist.songs.length) return;
+
+    // Stop current playback
+    const engine = getAudioEngine();
+    engine.stop();
+    setIsPlaying(false);
+    setCurrentTime(0);
+
+    // Navigate to the new song
+    const newSong = currentSetlist.songs[index];
+    router.push(`/mixer?song=${newSong.slug}&setlist=${currentSetlist.id}&index=${index}`);
+  }, [currentSetlist, router]);
+
   if (loadingState !== 'ready') {
     return (
       <LoadingOverlay
@@ -399,13 +445,12 @@ export default function MixerContent() {
           </button>
         </div>
 
-        {/* Future Setlist Area */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold text-gray-light uppercase tracking-wide mb-3">Setlist</h2>
-          <div className="text-sm text-gray-light italic">
-            Setlist coming soon...
-          </div>
-        </div>
+        {/* Setlist Panel */}
+        <SetlistPanel
+          setlist={currentSetlist}
+          currentIndex={currentSetlistIndex}
+          onSongSelect={handleSetlistSongSelect}
+        />
       </div>
     </div>
   );

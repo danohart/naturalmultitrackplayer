@@ -1,7 +1,7 @@
 // src/lib/storage/db.ts
 
 import Dexie, { Table } from 'dexie';
-import { CachedTrack, Setlist } from '../types';
+import { CachedTrack, SetlistData } from '../types';
 
 export interface CachedSong {
   id: number;
@@ -15,7 +15,7 @@ export interface CachedSong {
 export class MixerDatabase extends Dexie {
   cachedTracks!: Table<CachedTrack, number>;
   cachedSongs!: Table<CachedSong, number>;
-  setlists!: Table<Setlist, string>;
+  setlists!: Table<SetlistData, string>;
 
   constructor() {
     super('NaturalMixerDB');
@@ -133,15 +133,22 @@ export async function clearAllCache(): Promise<void> {
 /**
  * Save a setlist
  */
-export async function saveSetlist(setlist: Setlist): Promise<void> {
+export async function saveSetlist(setlist: SetlistData): Promise<void> {
   await db.setlists.put(setlist);
 }
 
 /**
  * Get all setlists
  */
-export async function getSetlists(): Promise<Setlist[]> {
+export async function getSetlists(): Promise<SetlistData[]> {
   return await db.setlists.toArray();
+}
+
+/**
+ * Get a single setlist by ID
+ */
+export async function getSetlist(id: string): Promise<SetlistData | undefined> {
+  return await db.setlists.get(id);
 }
 
 /**
