@@ -17,6 +17,11 @@ export default function InstallPrompt() {
     const standalone = window.matchMedia('(display-mode: standalone)').matches;
     setIsStandalone(standalone);
 
+    // Show prompt for iOS (if not dismissed before)
+    if (ios && !standalone && !localStorage.getItem('installPromptDismissed')) {
+      setShowPrompt(true);
+    }
+
     // Listen for install prompt (Android/Chrome)
     const handler = (e: any) => {
       e.preventDefault();
@@ -50,13 +55,8 @@ export default function InstallPrompt() {
   // Don't show if already installed
   if (isStandalone) return null;
 
-  // Don't show if dismissed before
-  if (typeof window !== 'undefined' && localStorage.getItem('installPromptDismissed')) {
-    return null;
-  }
-
   // iOS instructions
-  if (isIOS && !isStandalone) {
+  if (isIOS && !isStandalone && showPrompt) {
     return (
       <div className="fixed bottom-20 left-4 right-4 bg-primary-alt border-2 border-secondary rounded-lg p-4 shadow-2xl z-50 md:left-auto md:right-4 md:w-96">
         <button
@@ -65,7 +65,7 @@ export default function InstallPrompt() {
         >
           ✕
         </button>
-        <h3 className="font-bold text-primary mb-2">Install Natural Mixer</h3>
+        <h3 className="font-bold text-secondary mb-2">Install Natural Mixer</h3>
         <p className="text-sm text-gray-light mb-3">
           Install this app on your iPad for the best experience:
         </p>
@@ -94,7 +94,7 @@ export default function InstallPrompt() {
         >
           ✕
         </button>
-        <h3 className="font-bold text-primary mb-2">Install Natural Mixer</h3>
+        <h3 className="font-bold text-secondary mb-2">Install Natural Mixer</h3>
         <p className="text-sm text-gray-light mb-3">
           Install this app for quick access and offline use
         </p>
