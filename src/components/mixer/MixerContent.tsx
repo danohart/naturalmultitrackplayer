@@ -4,14 +4,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchSongBySlug, fetchSongsBySlugs } from '@/lib/api/wordpress';
-import { isSongCached, getSetlist, db } from '@/lib/storage/db';
+import { isSongCached, getSetlist, db, validateSetlistCache } from '@/lib/storage/db';
 import { getAudioEngine } from '@/lib/audio/engine';
 import { Song, HydratedSetlist } from '@/lib/types';
 import MixerControls from '@/components/mixer/MixerControls';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
 import SetlistPanel from '@/components/mixer/SetlistPanel';
+import CacheIncompleteError from '@/components/mixer/CacheIncompleteError';
+import { downloadManager } from '@/lib/storage/downloadManager';
 
-type LoadingState = 'idle' | 'checking-cache' | 'downloading' | 'loading-audio' | 'ready' | 'error';
+type LoadingState = 'idle' | 'validating-cache' | 'cache-incomplete' | 'checking-cache' | 'downloading' | 'loading-audio' | 'ready' | 'error';
 
 export default function MixerContent() {
   const searchParams = useSearchParams();
@@ -27,6 +29,7 @@ export default function MixerContent() {
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [missingCacheSongIds, setMissingCacheSongIds] = useState<number[]>([]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -109,6 +112,28 @@ export default function MixerContent() {
       }
       setSong(songData);
       setLoadingProgress(20);
+
+      // If we're in a setlist, validate all songs are cached BEFORE proceeding
+      if (currentSetlist) {
+        setLoadingState('validating-cache');
+        setLoadingMessage('Validating offline cache...');
+
+        const songIds = currentSetlist.songs.map((s) => s.id);
+        const validation = await validateSetlistCache(songIds);
+
+        if (!validation.allCached) {
+          // Block playback and show error
+          setLoadingState('cache-incomplete');
+          setError(
+            `Cannot play offline: ${validation.uncachedSongIds.length} song(s) not downloaded. ` +
+              `Download all setlist songs before performing.`
+          );
+
+          // Store missing songs for error UI
+          setMissingCacheSongIds(validation.uncachedSongIds);
+          return; // Stop here - don't load audio
+        }
+      }
 
       const initialStates: Record<string, { volume: number; muted: boolean; solo: boolean }> = {};
       songData.tracks.forEach((track) => {
@@ -349,7 +374,35 @@ export default function MixerContent() {
     router.push(`/mixer?song=${newSong.slug}&setlist=${currentSetlist.id}&index=${index}`);
   }, [currentSetlist, router]);
 
-  if (loadingState !== 'ready') {
+  // Full-screen errors (cache incomplete, critical errors)
+  if (loadingState === 'cache-incomplete') {
+    return (
+      <CacheIncompleteError
+        setlist={currentSetlist!}
+        missingCacheSongIds={missingCacheSongIds}
+        onDownloadAll={async () => {
+          const missingSongs = currentSetlist!.songs.filter((s) =>
+            missingCacheSongIds.includes(s.id)
+          );
+
+          try {
+            await downloadManager.downloadMultipleSongs(missingSongs);
+
+            // Retry initialization
+            setLoadingState('checking-cache');
+            setError(null);
+            initializeSong();
+          } catch (err) {
+            console.error('Download failed:', err);
+            setError(err instanceof Error ? err.message : 'Download failed');
+          }
+        }}
+        onBackToSetlist={() => router.push(`/setlist/${currentSetlist!.id}`)}
+      />
+    );
+  }
+
+  if (loadingState === 'error') {
     return (
       <LoadingOverlay
         state={loadingState}
@@ -360,22 +413,43 @@ export default function MixerContent() {
     );
   }
 
-  if (!song) {
-    return <div>Error: Song not found</div>;
-  }
+  const isLoading = loadingState !== 'ready';
 
   return (
     <div className="h-screen bg-gray-lightest text-white flex overflow-hidden">
       {/* Left Panel - Track Mixer */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <MixerControls
-          tracks={song.tracks}
-          trackStates={trackStates}
-          onVolumeChange={handleVolumeChange}
-          onMuteToggle={handleMuteToggle}
-          onSoloToggle={handleSoloToggle}
-          disabled={false}
-        />
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        {song && (
+          <MixerControls
+            tracks={song.tracks}
+            trackStates={trackStates}
+            onVolumeChange={handleVolumeChange}
+            onMuteToggle={handleMuteToggle}
+            onSoloToggle={handleSoloToggle}
+            disabled={isLoading}
+          />
+        )}
+
+        {/* Local loading overlay - only covers mixer area */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-primary/95 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-white text-lg font-semibold">{loadingMessage}</p>
+              {loadingProgress > 0 && (
+                <div className="mt-3">
+                  <div className="w-64 h-2 bg-gray-dark rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-secondary transition-all duration-300"
+                      style={{ width: `${loadingProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-light mt-1">{loadingProgress}%</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Right Panel - Song Info, Transport, Future Setlist */}
@@ -384,12 +458,22 @@ export default function MixerContent() {
         <div className="p-4 border-b border-gray-dark">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-lightest leading-tight">{song.song_name}</h1>
-              <div className="text-sm text-gray-light mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                {song.bpm && <span>{song.bpm} BPM</span>}
-                {song.key && <span>Key: {song.key}</span>}
-                {song.time_signature && <span>{song.time_signature}</span>}
-              </div>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-lightest leading-tight">
+                {song?.song_name || 'Loading...'}
+              </h1>
+              {song && (
+                <div className="text-sm text-gray-light mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                  {song.bpm && <span>{song.bpm} BPM</span>}
+                  {song.key && <span>Key: {song.key}</span>}
+                  {song.time_signature && <span>{song.time_signature}</span>}
+                </div>
+              )}
+              {isLoading && (
+                <div className="text-xs text-secondary mt-2 flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-secondary border-t-transparent rounded-full animate-spin"></div>
+                  Loading track data...
+                </div>
+              )}
             </div>
             <button
               onClick={handleBackToLibrary}
@@ -425,7 +509,8 @@ export default function MixerContent() {
           {isPlaying ? (
             <button
               onClick={handlePause}
-              className="w-full h-14 flex items-center justify-center gap-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors shadow-lg text-lg font-semibold"
+              disabled={isLoading}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-lg text-lg font-semibold"
             >
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M6 4h3v12H6V4zm5 0h3v12h-3V4z" />
@@ -435,7 +520,8 @@ export default function MixerContent() {
           ) : (
             <button
               onClick={handlePlay}
-              className="w-full h-14 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-lg text-lg font-semibold"
+              disabled={isLoading}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-lg text-lg font-semibold"
             >
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M6 4l10 6-10 6V4z" />
@@ -447,7 +533,8 @@ export default function MixerContent() {
           {/* Stop Button - Wide */}
           <button
             onClick={handleStop}
-            className="w-full h-12 mt-2 flex items-center justify-center gap-3 bg-gray-dark hover:bg-gray-700 rounded-lg transition-colors text-base font-medium"
+            disabled={isLoading}
+            className="w-full h-12 mt-2 flex items-center justify-center gap-3 bg-gray-dark hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-base font-medium"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <rect x="6" y="6" width="8" height="8" />
@@ -458,7 +545,8 @@ export default function MixerContent() {
           {/* Reset Button */}
           <button
             onClick={handleReset}
-            className="w-full h-10 mt-2 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary-bold text-primary rounded-lg transition-colors text-sm font-medium"
+            disabled={isLoading}
+            className="w-full h-10 mt-2 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary-bold disabled:opacity-50 disabled:cursor-not-allowed text-primary rounded-lg transition-colors text-sm font-medium"
           >
             Reset Mixer
           </button>

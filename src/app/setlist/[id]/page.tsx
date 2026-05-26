@@ -3,12 +3,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSetlist, saveSetlist } from '@/lib/storage/db';
+import { getSetlist, saveSetlist, isSongCached } from '@/lib/storage/db';
 import { fetchSongsBySlugs } from '@/lib/api/wordpress';
 import { generateShareUrl } from '@/lib/setlist/sharing';
 import { SetlistData, Song } from '@/lib/types';
 import SongPickerModal from '@/components/setlist/SongPickerModal';
 import SetlistSongRow from '@/components/setlist/SetlistSongRow';
+import { downloadManager } from '@/lib/storage/downloadManager';
+import { useDownloadStore } from '@/store/useDownloadStore';
 
 export default function SetlistEditorPage() {
   const params = useParams();
@@ -26,6 +28,14 @@ export default function SetlistEditorPage() {
   useEffect(() => {
     loadSetlist();
   }, [setlistId]);
+
+  // Check cache status for all songs when they're loaded
+  useEffect(() => {
+    if (songs.length > 0) {
+      const songIds = songs.map((s) => s.id);
+      useDownloadStore.getState().checkMultipleCacheStatus(songIds);
+    }
+  }, [songs]);
 
   const loadSetlist = async () => {
     try {
@@ -78,7 +88,35 @@ export default function SetlistEditorPage() {
     // Refresh songs
     const result = await fetchSongsBySlugs(newSlugs);
     setSongs(result.songs);
+
+    // Auto-download new songs in background
+    const newSongs = result.songs.filter((s) => slugs.includes(s.slug));
+
+    for (const song of newSongs) {
+      // Check if already cached
+      const cached = await isSongCached(song.id);
+      if (!cached) {
+        // Start download in background (don't await)
+        downloadManager
+          .downloadSong(song, (percent) => {
+            useDownloadStore.getState().setProgress(song.id, percent);
+          })
+          .catch((err) => {
+            console.error(`Failed to download ${song.song_name}:`, err);
+            useDownloadStore.getState().setCacheStatus(song.id, 'error');
+          });
+      }
+    }
+
     setShowPicker(false);
+
+    // Show notification if downloads started
+    if (newSongs.length > 0) {
+      const uncachedCount = newSongs.filter(async (s) => !(await isSongCached(s.id))).length;
+      if (uncachedCount > 0) {
+        console.log(`Downloading ${newSongs.length} song(s) in background...`);
+      }
+    }
   };
 
   const handleRemoveSong = async (index: number) => {
@@ -134,6 +172,43 @@ export default function SetlistEditorPage() {
     router.push(
       `/mixer?song=${setlist.songSlugs[0]}&setlist=${setlist.id}&index=0`
     );
+  };
+
+  const handleDownloadAll = async () => {
+    if (songs.length === 0) return;
+
+    // Check which songs need downloading
+    const needDownload: Song[] = [];
+    for (const song of songs) {
+      const cached = await isSongCached(song.id);
+      if (!cached) {
+        needDownload.push(song);
+      }
+    }
+
+    if (needDownload.length === 0) {
+      alert('All songs already cached!');
+      return;
+    }
+
+    const totalSize = needDownload.reduce((sum, s) => sum + s.total_size_mb, 0);
+
+    if (
+      !confirm(
+        `Download ${needDownload.length} song(s) for offline use? (${totalSize.toFixed(1)} MB)`
+      )
+    ) {
+      return;
+    }
+
+    // Trigger downloads
+    try {
+      await downloadManager.downloadMultipleSongs(needDownload);
+      alert('All songs downloaded successfully!');
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert('Some downloads failed. Check console for details.');
+    }
   };
 
   if (loading) {
@@ -215,6 +290,26 @@ export default function SetlistEditorPage() {
               className="bg-secondary hover:bg-secondary-bold text-primary px-4 py-2 rounded-lg font-semibold transition-colors"
             >
               + Add Songs
+            </button>
+            <button
+              onClick={handleDownloadAll}
+              disabled={songs.length === 0}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                />
+              </svg>
+              Download All
             </button>
             <button
               onClick={handleShare}

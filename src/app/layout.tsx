@@ -3,6 +3,7 @@ import "./globals.css";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import Navigation from "@/components/ui/Navigation";
+import GlobalDownloadProgress from "@/components/ui/GlobalDownloadProgress";
 
 export const metadata: Metadata = {
   title: "Natural Mixer",
@@ -58,6 +59,7 @@ export default function RootLayout({
         {children}
         <InstallPrompt />
         <OfflineIndicator />
+        <GlobalDownloadProgress />
       </body>
     </html>
   );

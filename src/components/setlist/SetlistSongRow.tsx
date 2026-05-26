@@ -2,6 +2,7 @@
 'use client';
 
 import { Song } from '@/lib/types';
+import CacheStatusBadge from '@/components/ui/CacheStatusBadge';
 
 interface SetlistSongRowProps {
   song: Song;
@@ -58,7 +59,10 @@ export default function SetlistSongRow({
 
       {/* Song info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-white truncate">{song.song_name}</h3>
+        <div className="flex items-center gap-3 mb-1">
+          <h3 className="font-semibold text-white truncate">{song.song_name}</h3>
+          <CacheStatusBadge songId={song.id} size="sm" />
+        </div>
         <p className="text-sm text-gray-light">
           {song.key && `Key: ${song.key}`}
           {song.key && song.bpm && ' • '}

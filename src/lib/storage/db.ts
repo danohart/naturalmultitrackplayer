@@ -171,3 +171,60 @@ export async function getSetlist(id: string): Promise<SetlistData | undefined> {
 export async function deleteSetlist(id: string): Promise<void> {
   await db.setlists.delete(id);
 }
+
+/**
+ * Validate that all songs in a setlist are fully cached
+ */
+export async function validateSetlistCache(songIds: number[]): Promise<{
+  allCached: boolean;
+  cachedSongIds: number[];
+  uncachedSongIds: number[];
+}> {
+  const cachedSongIds: number[] = [];
+  const uncachedSongIds: number[] = [];
+
+  for (const songId of songIds) {
+    const cached = await isSongCached(songId);
+    if (cached) {
+      cachedSongIds.push(songId);
+    } else {
+      uncachedSongIds.push(songId);
+    }
+  }
+
+  return {
+    allCached: uncachedSongIds.length === 0,
+    cachedSongIds,
+    uncachedSongIds,
+  };
+}
+
+/**
+ * Check storage quota (for iPad storage warnings)
+ *
+ * CAPACITOR FUTURE: Use Filesystem.stat() to check device storage
+ * instead of browser quota. Will need platform detection.
+ */
+export async function checkStorageQuota(): Promise<{
+  available: number;
+  used: number;
+  quota: number;
+  percentUsed: number;
+} | null> {
+  // Web browser check
+  if (navigator.storage && navigator.storage.estimate) {
+    const estimate = await navigator.storage.estimate();
+    return {
+      available: (estimate.quota || 0) - (estimate.usage || 0),
+      used: estimate.usage || 0,
+      quota: estimate.quota || 0,
+      percentUsed: estimate.quota ? (estimate.usage! / estimate.quota) * 100 : 0,
+    };
+  }
+
+  // TODO Capacitor: Use Filesystem.stat() for device storage
+  // import { Filesystem } from '@capacitor/filesystem';
+  // const stats = await Filesystem.stat({ ... });
+
+  return null;
+}
