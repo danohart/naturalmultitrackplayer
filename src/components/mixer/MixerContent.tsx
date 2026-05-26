@@ -432,7 +432,7 @@ export default function MixerContent() {
 
         {/* Local loading overlay - only covers mixer area */}
         {isLoading && (
-          <div className="absolute inset-0 bg-primary/95 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-primary/25 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-white text-lg font-semibold">{loadingMessage}</p>
@@ -557,6 +557,7 @@ export default function MixerContent() {
           setlist={currentSetlist}
           currentIndex={currentSetlistIndex}
           onSongSelect={handleSetlistSongSelect}
+          isLoading={isLoading}
         />
       </div>
     </div>

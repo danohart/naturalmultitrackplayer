@@ -8,12 +8,14 @@ interface SetlistPanelProps {
   setlist: HydratedSetlist | null;
   currentIndex: number;
   onSongSelect: (index: number) => void;
+  isLoading?: boolean;
 }
 
 export default function SetlistPanel({
   setlist,
   currentIndex,
   onSongSelect,
+  isLoading = false,
 }: SetlistPanelProps) {
   if (!setlist) {
     return (
@@ -62,20 +64,21 @@ export default function SetlistPanel({
             <button
               key={song.slug}
               onClick={() => onSongSelect(index)}
-              className={`w-full text-left p-2 rounded-lg transition-colors flex items-center gap-2 ${
+              disabled={isLoading && index !== currentIndex}
+              className={`w-full text-left p-4 rounded-lg transition-colors flex items-center gap-2 ${
                 index === currentIndex
                   ? 'bg-secondary text-primary font-semibold'
-                  : 'bg-gray-dark/50 hover:bg-gray-dark text-white'
+                  : 'bg-gray-dark/50 hover:bg-gray-dark text-white disabled:opacity-50 disabled:cursor-not-allowed'
               }`}
             >
               <span
-                className={`text-xs font-mono w-5 ${
+                className={`text-lg font-mono w-5 ${
                   index === currentIndex ? 'text-primary' : 'text-gray-light'
                 }`}
               >
                 {index + 1}.
               </span>
-              <span className="truncate text-sm">{song.song_name}</span>
+              <span className="truncate text-md">{song.song_name}</span>
             </button>
           ))}
         </div>
@@ -85,14 +88,14 @@ export default function SetlistPanel({
       <div className="flex gap-2 p-4 pt-2">
         <button
           onClick={() => onSongSelect(currentIndex - 1)}
-          disabled={currentIndex === 0}
+          disabled={isLoading || currentIndex === 0}
           className="flex-1 bg-gray-dark hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Previous
         </button>
         <button
           onClick={() => onSongSelect(currentIndex + 1)}
-          disabled={currentIndex >= setlist.songs.length - 1}
+          disabled={isLoading || currentIndex >= setlist.songs.length - 1}
           className="flex-1 bg-gray-dark hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Next
