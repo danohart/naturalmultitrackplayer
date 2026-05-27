@@ -4,12 +4,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchSongBySlug, fetchSongsBySlugs } from '@/lib/api/wordpress';
-import { isSongCached, getSetlist, db, validateSetlistCache } from '@/lib/storage/db';
+import { isSongCached, getSetlist, db, validateSetlistCache, getCachedSongBySlug, getCachedSongsBySlugs } from '@/lib/storage/db';
+import { getOrCreateQueue, QUEUE_ID } from '@/lib/storage/queue';
 import { getAudioEngine } from '@/lib/audio/engine';
 import { Song, HydratedSetlist } from '@/lib/types';
 import MixerControls from '@/components/mixer/MixerControls';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
-import SetlistPanel from '@/components/mixer/SetlistPanel';
+import QueuePanel from '@/components/mixer/QueuePanel';
+import AddSongsDrawer from '@/components/mixer/AddSongsDrawer';
 import CacheIncompleteError from '@/components/mixer/CacheIncompleteError';
 import { downloadManager } from '@/lib/storage/downloadManager';
 
@@ -31,28 +33,52 @@ export default function MixerContent() {
   const [error, setError] = useState<string | null>(null);
   const [missingCacheSongIds, setMissingCacheSongIds] = useState<number[]>([]);
 
+  const [showAddDrawer, setShowAddDrawer] = useState(false);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const [trackStates, setTrackStates] = useState<Record<string, { volume: number; muted: boolean; solo: boolean }>>({});
 
   useEffect(() => {
     initializeSong();
-    if (setlistId) {
-      loadSetlist();
-    }
+    loadSetlist(); // Load queue by default, or setlist if setlistId provided
     if (setlistIndexParam !== null) {
       setCurrentSetlistIndex(parseInt(setlistIndexParam, 10) || 0);
     }
   }, [songSlug, setlistId, setlistIndexParam]);
 
   const loadSetlist = async () => {
-    if (!setlistId) return;
     try {
-      const setlistData = await getSetlist(setlistId);
+      let setlistData;
+
+      if (setlistId) {
+        // Legacy: load specific setlist
+        setlistData = await getSetlist(setlistId);
+      } else {
+        // New default: load global queue
+        setlistData = await getOrCreateQueue();
+      }
+
       if (setlistData && setlistData.songSlugs.length > 0) {
-        const { songs, missingSlugs } = await fetchSongsBySlugs(setlistData.songSlugs);
+        let songs;
+        let missingSlugs;
+
+        // Check if offline - if so, load from IndexedDB cache
+        const isOnline = navigator.onLine;
+        if (!isOnline) {
+          const cached = await getCachedSongsBySlugs(setlistData.songSlugs);
+          songs = cached.songs;
+          missingSlugs = cached.missingSlugs;
+        } else {
+          // Online: fetch from API (with localStorage fallback)
+          const result = await fetchSongsBySlugs(setlistData.songSlugs);
+          songs = result.songs;
+          missingSlugs = result.missingSlugs;
+        }
+
         const hydrated: HydratedSetlist = {
           id: setlistData.id,
           name: setlistData.name,
@@ -65,6 +91,17 @@ export default function MixerContent() {
 
         // Preload all setlist songs in the background
         preloadSetlistSongs(songs);
+      } else if (setlistData) {
+        // Queue exists but is empty
+        const hydrated: HydratedSetlist = {
+          id: setlistData.id,
+          name: setlistData.name,
+          songs: [],
+          missingSlugs: [],
+          created_at: setlistData.created_at,
+          updated_at: setlistData.updated_at,
+        };
+        setCurrentSetlist(hydrated);
       }
     } catch (err) {
       console.error('Failed to load setlist:', err);
@@ -106,10 +143,25 @@ export default function MixerContent() {
       setLoadingMessage('Loading song metadata...');
       setLoadingProgress(10);
 
-      const songData = await fetchSongBySlug(songSlug);
-      if (!songData) {
-        throw new Error('Song not found');
+      let songData: Song | null = null;
+
+      // Try to load from cache first if offline
+      const isOnline = navigator.onLine;
+      if (!isOnline) {
+        const cachedSong = await getCachedSongBySlug(songSlug);
+        if (cachedSong) {
+          songData = JSON.parse(cachedSong.metadata);
+        } else {
+          throw new Error('Song not available offline. Please connect to the internet.');
+        }
+      } else {
+        // Online: fetch from API
+        songData = await fetchSongBySlug(songSlug);
+        if (!songData) {
+          throw new Error('Song not found');
+        }
       }
+
       setSong(songData);
       setLoadingProgress(20);
 
@@ -150,12 +202,25 @@ export default function MixerContent() {
       const cached = await isSongCached(songData.id);
 
       if (!cached) {
-        await downloadSong(songData);
-      } else {
-        setLoadingProgress(60);
-      }
+        // Check if online
+        const isOnline = navigator.onLine;
 
-      await loadAudioEngine(songData);
+        if (!isOnline) {
+          // Block playback - show error
+          setLoadingState('error');
+          setError('Cannot play offline: This song is not downloaded. Connect to the internet to stream or download it first.');
+          setIsStreaming(false);
+          return;
+        } else {
+          // Stream from URLs instead of downloading
+          setIsStreaming(true);
+          await loadAudioEngineFromUrls(songData);
+        }
+      } else {
+        setIsStreaming(false);
+        setLoadingProgress(60);
+        await loadAudioEngine(songData);
+      }
 
       setLoadingState('ready');
       setLoadingMessage('Ready to play!');
@@ -223,6 +288,20 @@ export default function MixerContent() {
 
     const engine = getAudioEngine();
     await engine.loadSong(songData.id, songData.tracks);
+
+    const songDuration = engine.getDuration();
+    setDuration(songDuration);
+
+    setLoadingProgress(100);
+  };
+
+  const loadAudioEngineFromUrls = async (songData: Song) => {
+    setLoadingState('loading-audio');
+    setLoadingMessage('Streaming audio tracks...');
+    setLoadingProgress(70);
+
+    const engine = getAudioEngine();
+    await engine.loadSongFromUrls(songData.id, songData.tracks);
 
     const songDuration = engine.getDuration();
     setDuration(songDuration);
@@ -453,7 +532,7 @@ export default function MixerContent() {
       </div>
 
       {/* Right Panel - Song Info, Transport, Future Setlist */}
-      <div className="w-72 bg-primary-alt border-l border-gray-dark flex flex-col">
+      <div className="w-72 bg-primary-alt border-l border-gray-dark flex flex-col relative">
         {/* Song Info */}
         <div className="p-4 border-b border-gray-dark">
           <div className="flex items-start justify-between gap-2">
@@ -466,6 +545,11 @@ export default function MixerContent() {
                   {song.bpm && <span>{song.bpm} BPM</span>}
                   {song.key && <span>Key: {song.key}</span>}
                   {song.time_signature && <span>{song.time_signature}</span>}
+                </div>
+              )}
+              {isStreaming && (
+                <div className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                  ⚠️ Streaming (requires internet)
                 </div>
               )}
               {isLoading && (
@@ -552,12 +636,24 @@ export default function MixerContent() {
           </button>
         </div>
 
-        {/* Setlist Panel */}
-        <SetlistPanel
-          setlist={currentSetlist}
+        {/* Queue Panel */}
+        <QueuePanel
+          queue={currentSetlist}
           currentIndex={currentSetlistIndex}
           onSongSelect={handleSetlistSongSelect}
+          onAddSongs={() => setShowAddDrawer(true)}
+          onReorder={() => {
+            loadSetlist();
+          }}
           isLoading={isLoading}
+        />
+
+        {/* Add Songs Drawer - overlays the right panel */}
+        <AddSongsDrawer
+          isOpen={showAddDrawer}
+          onClose={() => setShowAddDrawer(false)}
+          currentQueueSlugs={currentSetlist?.songs.map((s) => s.slug) ?? []}
+          onSongAdded={loadSetlist}
         />
       </div>
     </div>

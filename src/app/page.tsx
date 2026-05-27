@@ -12,10 +12,10 @@ export default function Home() {
         <h1 className="text-5xl font-bold text-primary mb-4">Natural Mixer</h1>
         <p className="text-gray-dark text-xl mb-8">Multi-track audio mixer for live performance</p>
         <button
-          onClick={() => router.push('/library')}
+          onClick={() => router.push('/mixer')}
           className="bg-secondary hover:bg-secondary-bold text-primary px-8 py-4 rounded-lg text-xl font-semibold transition-colors"
         >
-          Browse Song Library →
+          Open Mixer →
         </button>
       </div>
     </div>

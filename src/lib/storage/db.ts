@@ -3,6 +3,9 @@
 import Dexie, { Table } from 'dexie';
 import { CachedTrack, SetlistData } from '../types';
 
+// Queue ID constant
+export const QUEUE_ID = '__GLOBAL_QUEUE__';
+
 export interface CachedSong {
   id: number;
   slug: string;
@@ -53,10 +56,41 @@ export async function isSongFullyCached(
 }
 
 /**
- * Get cached song metadata
+ * Get cached song metadata by ID
  */
 export async function getCachedSong(songId: number): Promise<CachedSong | undefined> {
   return await db.cachedSongs.get(songId);
+}
+
+/**
+ * Get cached song metadata by slug
+ */
+export async function getCachedSongBySlug(slug: string): Promise<CachedSong | undefined> {
+  return await db.cachedSongs.where('slug').equals(slug).first();
+}
+
+/**
+ * Get multiple cached songs by slugs (for offline queue loading)
+ * Returns songs that are available in cache, and lists missing slugs
+ */
+export async function getCachedSongsBySlugs(slugs: string[]): Promise<{
+  songs: any[];
+  missingSlugs: string[];
+}> {
+  const songs: any[] = [];
+  const missingSlugs: string[] = [];
+
+  for (const slug of slugs) {
+    const cachedSong = await getCachedSongBySlug(slug);
+    if (cachedSong) {
+      // Parse the metadata JSON to get the full Song object
+      songs.push(JSON.parse(cachedSong.metadata));
+    } else {
+      missingSlugs.push(slug);
+    }
+  }
+
+  return { songs, missingSlugs };
 }
 
 /**

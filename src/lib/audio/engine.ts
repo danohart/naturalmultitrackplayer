@@ -73,6 +73,55 @@ export class AudioEngine {
   }
 
   /**
+   * Load song from remote URLs (streaming mode)
+   * Used when song is not cached but user is online
+   * Does NOT add to decodedCache - temporary playback only
+   */
+  async loadSongFromUrls(songId: number, tracks: Track[]): Promise<void> {
+    if (!this.audioContext) {
+      throw new Error('AudioContext not initialized');
+    }
+
+    // Download and decode directly from URLs
+    const decodePromises = tracks.map(async (track) => {
+      const response = await fetch(track.url);
+      if (!response.ok) {
+        throw new Error(`Failed to stream ${track.display_name}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+
+      return { filename: track.converted_filename, buffer: audioBuffer };
+    });
+
+    const results = await Promise.all(decodePromises);
+
+    // Store in temporary buffers (don't cache to decodedCache)
+    const songBuffers = new Map<string, AudioBuffer>();
+    results.forEach(({ filename, buffer }) => {
+      songBuffers.set(filename, buffer);
+    });
+
+    // Stop current playback if any
+    this.stop();
+
+    // Clear previous gain nodes
+    this.gainNodes.clear();
+
+    // Set the active buffers reference
+    this.activeBuffers = songBuffers;
+    this.activeSongId = songId;
+
+    // Create gain nodes for each track
+    songBuffers.forEach((buffer, filename) => {
+      const gainNode = this.audioContext!.createGain();
+      gainNode.connect(this.audioContext!.destination);
+      this.gainNodes.set(filename, gainNode);
+    });
+  }
+
+  /**
    * Decode all tracks for a song in parallel and cache them
    */
   private async decodeAndCacheSong(songId: number, tracks: Track[]): Promise<void> {
