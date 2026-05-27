@@ -165,6 +165,8 @@ export default function MixerContent() {
       setSong(songData);
       setLoadingProgress(20);
 
+      if (!songData) return;
+
       // If we're in a setlist, validate all songs are cached BEFORE proceeding
       if (currentSetlist) {
         setLoadingState('validating-cache');
